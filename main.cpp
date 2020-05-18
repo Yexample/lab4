@@ -2,12 +2,16 @@
 #include <cstdlib>
 #include <ctime>
 #include <windows.h>
-#include <iomanip>   
-#include <cctype>   
+#include <iomanip>  
+#include <cctype>  
 #include <random>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 #define DOT '.'
 #define MINUS '-'
+#define ZERO '0'
 
 using namespace std;
 
@@ -17,6 +21,7 @@ void delmatrix (float **Matrix, int rows);
 float checkinput (string limit);
 int checkint (string dimensions);
 
+
 void manualPopulation(float **Matrix, int rows, int columns);
 
 int main()
@@ -24,23 +29,33 @@ int main()
 
     SetConsoleOutputCP(CP_UTF8);
 
-    string dimensions = "Количество рядов: ";
-    int rows = checkint(dimensions);
-    dimensions = "Количество колоно: ";
-    int columns = checkint(dimensions);
+    int rows, columns = 0;
+    ifstream inFile;
+    inFile.open("1.txt");
+
+    if (inFile.fail()) {
+        cerr << "Error opening file";
+        exit(1);
+    }
+
+    inFile >> rows >> columns;
+    cout << "rows = " << rows << endl;
+    cout << "columns = " << columns << endl;
+    inFile.close();
+
+    int elementsAmount = rows * columns;
+    cout << "Elements in Matrix = " << elementsAmount << endl;
 
     float **Matrix = new float*[rows];
     for (int i = 1; i < rows; ++i)
         Matrix[i] = new float[columns];
 
     char ans;
-    do
-    {
+    do {
         cout << "Ввести значения вручную (если нет, то значения будут случайными)?  y/n: ";
         cin >> ans;
         if (ans != 'y' && ans != 'n') cout << "Введите 'y' или 'n'" << endl;
         else break;
-
     } while (true);
 
     if(ans == 'n') rand_gen(Matrix, rows, columns);
@@ -51,12 +66,17 @@ int main()
     }
 
     int fullSum;
-
     ztype(Matrix, rows, columns);
-
     delmatrix(Matrix, rows);
 
-    system("pause");
+    char rerun;
+    cout << "Запустить программу снова? (Y = да) "; // Запрос на повторный запуск
+    cin >> rerun;
+    if (rerun == 'y' or rerun == 'Y')
+        main();
+    else
+        system("pause");
+
     return 0;
 }
 
@@ -76,21 +96,51 @@ void rand_gen(float **Matrix, int rows, int columns)
     mt19937 eng(rd());
     uniform_real_distribution<float> distr(min, max);
 
+    cout << endl;
+
+    ofstream outFile;
+    outFile.open("2.txt");
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            outFile << distr((eng)) << endl;
+        }
+    }
+    outFile.close();
+
+    ifstream inFile;
+    inFile.open("2.txt");
+    if (inFile.fail()) {
+        cerr << "Error opening file 2";
+        exit(1);
+    }
+    cout << endl;
+
+    cout << "\nElements in file 2" << endl;
+
+
+
+    for (int i = 0; i < rows; i++) {
+        Matrix[i] = new float[columns];
+        for (int j = 0; j < columns; j++) {
+            inFile >> Matrix[i][j];
+        }
+    }
+    inFile.close();
+
+    ofstream outFile3;
+    outFile3.open("3.txt");
+
+
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < columns; j++) {
-
-            Matrix[i][j] = distr((eng));
-        }
-    }
-
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = 0; j < columns; j++)
             cout << fixed << setprecision(3) << Matrix[i][j] << "\t ";
+            outFile3 << Matrix[i][j] << endl;
+        }
 
         cout << endl;
     }
+    outFile3.close();
 }
 
 void ztype(float **Matrix, int rows, int columns) {
@@ -105,86 +155,100 @@ void ztype(float **Matrix, int rows, int columns) {
             for (int j = 0; j < columns; j++)
                 fullSum += Matrix[i][j];
         }
-
-        for (int i = 0; i < rows; i++) {
+        for (int i = 0; i < rows; i++)
             diagSum += Matrix[i][i];
-        }
 
         if (fullSum - diagSum <= 0){
-            cout << "Матрица Z-образная" << endl;
+            cout << "\nМатрица Z-образная" << endl;
 
             for (int i = 0; i < rows; i++) {
                 total = 0;
-                for (int j = 0; j < columns; j++) {
+                for (int j = 0; j < columns; j++)
                     total += Matrix[i][j];
-                }
+
                 cout << "сумма строки " << i+1 << ": " << total << endl;
             }
         }
-        else cout << "Матрица не Z-образная" << endl;
+        else
+            cout << "\nМатрица не Z-образная" << endl;
     }
-
+    else
+        cout << "\nМатрица не Z-образная" << endl;
     //cout << "Sum diag: " << diagSum << endl; //   CHECK for correct diagSum calculation
     //cout << "Full sum: " << fullSum << endl; //     CHECK for correct fullSum calculation
 }
 
 
-void delmatrix(float **Matrix, int rows)
-{
+void delmatrix(float **Matrix, int rows) {
     for (int i = 0; i < rows; i++)
         delete [] Matrix[i];
     delete [] Matrix;
 }
 
 float checkinput (string limit) {
-    string minstr;
+
+    string input;
     int count = 0;
     int count_dot = 0;
     int count_minus = 0;
+    int count_zero = 0;
     bool flag = true;
     bool flag_dot = false;
     bool flag_minus = false;
+    bool flag_zero = false;
     bool correct = false;
 
     do {
         cout << limit;
-        cin >> minstr;
-        for (int i = 0; i < (int) minstr.length(); i++) {
-            if (minstr[i] == DOT) {
+        cin >> input;
+        for (int i = 0; i < (int) input.length(); i++) {
+            if (input[i] == DOT) {
                 count_dot++;
                 flag_dot = true;
             }
-            if (minstr[i] == MINUS) {
+            if (input[i] == MINUS) {
                 flag_minus = true;
                 count_minus++;
             }
-            if (((!isdigit(minstr[i])) && (!flag_dot) && (!flag_minus)) || (count_dot >= 2)) {
+            if (input[i] == ZERO) {
+                flag_zero = true;
+                count_zero++;
+            }
+            if (((!isdigit(input[i])) && (!flag_dot) && (!flag_minus) && (!flag_zero)) || (count_dot >= 2)) {
                 cout << "Введено не число, попробуйте еще раз" << endl;
                 cin.ignore(10000, '\n');
                 flag = true;
+                count = 0;
+                count_dot = 0;
+                count_minus = 0;
                 break;
-            }
-            else
+            } else
                 count++;
         }
-        if ((((count == (int) minstr.length()) && (atof(minstr.c_str()) > -9223372036854775808.0) &&
-              (atoi(minstr.c_str()) < 9223372036854775807.0))) || (count_minus == 1) &&
-                                                                  (((int(count + 1) == (int) minstr.length()) && (atof(minstr.c_str()) > -9223372036854775808.0) &&
-                                                                    (atoi(minstr.c_str()) < 9223372036854775807.0))))
-
-        {
+        if (((((count == (int) input.length()) && (atof(input.c_str()) > -9223372036854775808.0) &&
+               (atof(input.c_str()) < 9223372036854775807.0))) || (count_minus == 1) &&
+                                                                  (((int(count + 1) == (int) input.length()) && (atof(input.c_str()) > -9223372036854775808.0) &&
+                                                                    (atof(input.c_str()) < 9223372036854775807.0))) || (count_zero == 1) &&
+                                                                                                                       (((int(count) == (int) input.length()) && (atof(input.c_str()) > -9223372036854775808.0) &&
+                                                                                                                         (atof(input.c_str()) < 9223372036854775807.0))) || (count_dot == 1) &&
+                                                                                                                                                                            (((int(count + 1) == (int) input.length()) && (atof(input.c_str()) > -9223372036854775808.0) &&
+                                                                                                                                                                              (atof(input.c_str()) < 9223372036854775807.0)))) || (count_minus == 1) &&
+                                                                                                                                                                                                                                  (((int(count + 1) == (int) input.length()) && (atof(input.c_str()) > -9223372036854775808.0) &&
+                                                                                                                                                                                                                                    (atof(input.c_str()) < 9223372036854775807.0))) || (count_zero == 1) && (count_dot == 1) &&
+                                                                                                                                                                                                                                                                                       (((int(count + 1) == (int) input.length()) && (atof(input.c_str()) > -9223372036854775808.0) &&
+                                                                                                                                                                                                                                                                                         (atof(input.c_str()) < 9223372036854775807.0))) || (count_zero == 1) && (count_minus == 1) && (count_dot == 1) &&
+                                                                                                                                                                                                                                                                                                                                            (((int(count + 2) == (int) input.length()) )) || (count_zero == 1) && (count_minus == 0) && (count_dot == 0) &&
+                                                                                                                                                                                                                                                                                                                                                                                             (int(count) == 0)) {
             correct = true;
-        }
-        else if (flag) {
+        } else if (flag) {
             correct = false;
         }
     } while (correct == false);
-
-    float min = stof(minstr);
-
+    float min = stof(input);
     return min;
-
 }
+
+
 
 int checkint (string dimensions) {
 
@@ -201,7 +265,7 @@ int checkint (string dimensions) {
             if (str[i] == DOT) {
                 flag_dot = true;
             }
-            if (((!isdigit(str[i])) || (flag_dot))) {
+            if ((!isdigit(str[i])) || (flag_dot)) {
                 cout << "Ошибка, введите целое число" << endl;
                 cin.ignore(10000, '\n');
                 flag = true;
@@ -225,12 +289,15 @@ int checkint (string dimensions) {
 
 void manualPopulation(float **Matrix, int rows, int columns)
 {
-    for (int i = 0; i < rows; i++)
+    for (int i = 0; i < rows; i++) {
+        Matrix[i] = new float[columns];
         for (int j = 0; j < columns; j++) {
             cout << '[' << int(i + 1) << ']' << '[' << int(j + 1) << "] ";
             string limit = "";
             Matrix[i][j] = checkinput(limit);
         }
+    }
+    cout << endl;
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < columns; j++)
@@ -238,4 +305,48 @@ void manualPopulation(float **Matrix, int rows, int columns)
 
         cout << endl;
     }
+    cout << endl;
+
+    ofstream outFile;
+    outFile.open("2.txt");
+    float input;
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            cout << '[' << int(i + 1) << ']' << '[' << int(j + 1) << "] ";
+            string limit = "";
+            input = checkinput(limit);
+            outFile << input << endl;
+        }
+    }
+    outFile.close();
+
+    ifstream inFile;
+    inFile.open("2.txt");
+    if (inFile.fail()) {
+        cerr << "Error opening file 2";
+        exit(1);
+    }
+
+    cout << "\nElements in file 2" << endl;
+    for (int i = 0; i < rows; i++) {
+        Matrix[i] = new float[columns];
+        for (int j = 0; j < columns; j++) {
+            inFile >> Matrix[i][j];
+        }
+    }
+    inFile.close();
+
+    ofstream outFile3;
+    outFile3.open("3.txt");
+
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns; j++) {
+            cout << fixed << setprecision(3) << Matrix[i][j] << "\t ";
+            outFile3 << Matrix[i][j] << endl;
+        }
+
+        cout << endl;
+    }
+    outFile3.close();
 }
