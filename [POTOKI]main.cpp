@@ -2,8 +2,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <windows.h>
-#include <iomanip>  
-#include <cctype>  
+#include <iomanip>   // std::setprecision
+#include <cctype>   // для функции isdigit
 #include <random>
 #include <fstream>
 #include <string>
@@ -46,9 +46,20 @@ int main()
     int elementsAmount = rows * columns;
     cout << "Elements in Matrix = " << elementsAmount << endl;
 
+    //generateElements (elementsAmount);
+
+
+/*    string dimensions = "Количество рядов: ";
+    int rows = checkint(dimensions);
+    dimensions = "Количество колонок: ";
+    int columns = checkint(dimensions);*/
+
     float **Matrix = new float*[rows];
     for (int i = 1; i < rows; ++i)
         Matrix[i] = new float[columns];
+
+    /////// Populate file 2 (elements of matrix)?   [YES   /    NO]  ///////////////////////////////
+
 
     char ans;
     do {
@@ -65,8 +76,30 @@ int main()
         manualPopulation(Matrix, rows, columns);
     }
 
+
+    ///////
+
+    /*char ans;
+    do
+    {
+        cout << "Ввести значения вручную (если нет, то значения будут случайными)?  y/n: ";
+        cin >> ans;
+        if (ans != 'y' && ans != 'n') cout << "Введите 'y' или 'n'" << endl;
+        else break;
+
+    } while (true);
+
+    if(ans == 'n') rand_gen(Matrix, rows, columns);
+    if(ans == 'y')
+    {
+        cout << "Введите " << rows * columns << " значений:"  << endl;
+        manualPopulation(Matrix, rows, columns);
+    }*/
+
     int fullSum;
+
     ztype(Matrix, rows, columns);
+
     delmatrix(Matrix, rows);
 
     char rerun;
@@ -289,7 +322,7 @@ int checkint (string dimensions) {
 
 void manualPopulation(float **Matrix, int rows, int columns)
 {
-    for (int i = 0; i < rows; i++) {
+    /*for (int i = 0; i < rows; i++) {
         Matrix[i] = new float[columns];
         for (int j = 0; j < columns; j++) {
             cout << '[' << int(i + 1) << ']' << '[' << int(j + 1) << "] ";
@@ -305,7 +338,7 @@ void manualPopulation(float **Matrix, int rows, int columns)
 
         cout << endl;
     }
-    cout << endl;
+    cout << endl;*/
 
     ofstream outFile;
     outFile.open("2.txt");
